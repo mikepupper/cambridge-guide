@@ -20,18 +20,24 @@ for p in places:
  assert p['source'].startswith('http')
  assert p['image'].startswith('imágenes/')
  with Image.open(root/p['image']) as im:im.verify()
+ assert 52.14<=p.get('lat',0)<=52.26,(p['name'],'lat out of range')
+ assert 0.05<=p.get('lng',0)<=0.21,(p['name'],'lng out of range')
 class Check(HTMLParser):
- def __init__(self):super().__init__();self.images=[];self.maps=[];self.ids=set();self.anchors=[]
+ def __init__(self):super().__init__();self.images=[];self.maps=[];self.ids=set();self.anchors=[];self.cards=[]
  def handle_starttag(self,tag,attrs):
   d=dict(attrs)
   if 'id' in d:assert d['id'] not in self.ids;self.ids.add(d['id'])
   if tag=='img':self.images.append(d);assert d.get('alt')
+  if tag=='article' and 'card' in d.get('class',''):self.cards.append(d)
   if tag=='a':
    href=d.get('href','')
    if href.startswith('#'):self.anchors.append(href[1:])
    if 'google.com/maps/dir/' in href:self.maps.append(href)
 check=Check();check.feed((root/'index.html').read_text())
 assert len(check.images)==len(check.maps)==N
+assert len(check.cards)==N
+for c in check.cards:
+ assert c.get('data-lat') and c.get('data-lng'),c
 for img in check.images:assert (root/unquote(img['src'])).is_file()
 for target in check.anchors:assert target in check.ids,target
 for url in check.maps:

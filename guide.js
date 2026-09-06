@@ -70,6 +70,51 @@
     });
   }
 
+  const locateBtn = document.getElementById('locate-btn');
+  if (locateBtn) {
+    if (!('geolocation' in navigator)) {
+      locateBtn.hidden = true;
+    } else {
+      const originalLabel = locateBtn.textContent;
+      locateBtn.addEventListener('click', () => {
+        locateBtn.disabled = true;
+        locateBtn.textContent = 'Buscando tu ubicación…';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const R = 6371000;
+            const toRad = (d) => (d * Math.PI) / 180;
+            document.querySelectorAll('.card[data-lat]').forEach((card) => {
+              const lat = parseFloat(card.dataset.lat);
+              const lng = parseFloat(card.dataset.lng);
+              const dLat = toRad(lat - latitude);
+              const dLng = toRad(lng - longitude);
+              const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(latitude)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+              const meters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              const label = meters < 1000 ? `${Math.round(meters / 10) * 10} m` : `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+              const el = card.querySelector('.distance');
+              if (el) {
+                el.textContent = `A ${label} de ti`;
+                el.hidden = false;
+              }
+            });
+            locateBtn.hidden = true;
+          },
+          () => {
+            locateBtn.disabled = false;
+            locateBtn.textContent = 'No se pudo acceder a tu ubicación';
+            setTimeout(() => {
+              locateBtn.textContent = originalLabel;
+            }, 3000);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+    }
+  }
+
   const topBtn = document.createElement('button');
   topBtn.type = 'button';
   topBtn.className = 'float-top';
