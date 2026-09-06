@@ -1,0 +1,41 @@
+import json
+from pathlib import Path
+from collections import Counter
+from html.parser import HTMLParser
+from PIL import Image
+from urllib.parse import urlparse,parse_qs,unquote
+root=Path(__file__).resolve().parent
+places=json.loads((root/'places.json').read_text())
+N=len(places)
+assert len({p['name'] for p in places})==N
+cats=Counter(p['category'] for p in places)
+assert len(cats)==6
+for cat,n in cats.items():
+ assert 10<=n<=15,(cat,n)
+ assert sum(p['local'] for p in places if p['category']==cat)>=n/2
+ assert any(not p['local'] for p in places if p['category']==cat)
+for p in places:
+ assert all(p.get(k) for k in ['name','description','address','source','image','image_source','attribution'])
+ assert len(p['description'].split())>=20,(p['name'],'description too short')
+ assert p['source'].startswith('http')
+ assert p['image'].startswith('imágenes/')
+ with Image.open(root/p['image']) as im:im.verify()
+class Check(HTMLParser):
+ def __init__(self):super().__init__();self.images=[];self.maps=[];self.ids=set();self.anchors=[]
+ def handle_starttag(self,tag,attrs):
+  d=dict(attrs)
+  if 'id' in d:assert d['id'] not in self.ids;self.ids.add(d['id'])
+  if tag=='img':self.images.append(d);assert d.get('alt')
+  if tag=='a':
+   href=d.get('href','')
+   if href.startswith('#'):self.anchors.append(href[1:])
+   if 'google.com/maps/dir/' in href:self.maps.append(href)
+check=Check();check.feed((root/'index.html').read_text())
+assert len(check.images)==len(check.maps)==N
+for img in check.images:assert (root/unquote(img['src'])).is_file()
+for target in check.anchors:assert target in check.ids,target
+for url in check.maps:
+ q=parse_qs(urlparse(url).query)
+ assert q['api']==['1'] and q['travelmode']==['walking'] and q['destination'][0]
+print(f'Verified: {N} distinct places, 10-15 per category, >=50% local in each, {N} valid photos, {N} walking directions, all internal links.')
+print(dict(cats))

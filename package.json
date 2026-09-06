@@ -1,0 +1,1 @@
+{"name":"cambridge-pocket-guide","version":"1.0.0","private":true,"scripts":{"build":"python3 build.py","dev":"python3 -m http.server 4173 --bind 127.0.0.1"}}
