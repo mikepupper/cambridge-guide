@@ -30,15 +30,44 @@
 
   const nav = document.querySelector('.nav-inner');
   function updateFade() {
-    const el = document.querySelector('.category-nav');
-    if (!el) return;
-    el.classList.toggle('fade-left', nav.scrollLeft > 4);
-    el.classList.toggle('fade-right', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+    if (!nav) return;
+    nav.classList.toggle('fade-left', nav.scrollLeft > 4);
+    nav.classList.toggle('fade-right', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
   }
   if (nav) {
     updateFade();
     nav.addEventListener('scroll', updateFade, { passive: true });
     window.addEventListener('resize', updateFade);
+  }
+
+  const surpriseBtn = document.getElementById('surprise-btn');
+  const surpriseView = document.getElementById('surprise-view');
+  const surpriseCard = document.getElementById('surprise-card');
+  const surpriseBack = document.getElementById('surprise-back');
+  const categoryNav = document.querySelector('.category-nav');
+  const introEl = document.querySelector('.intro');
+  const mainEl = document.getElementById('guia');
+
+  if (surpriseBtn && surpriseView && surpriseCard && surpriseBack && mainEl) {
+    surpriseBtn.addEventListener('click', () => {
+      const cards = [...document.querySelectorAll('main .card')];
+      if (!cards.length) return;
+      const pick = cards[Math.floor(Math.random() * cards.length)].cloneNode(true);
+      pick.querySelectorAll('img').forEach((img) => (img.loading = 'eager'));
+      surpriseCard.replaceChildren(pick);
+      introEl.hidden = true;
+      categoryNav.hidden = true;
+      mainEl.hidden = true;
+      surpriseView.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    surpriseBack.addEventListener('click', () => {
+      surpriseView.hidden = true;
+      introEl.hidden = false;
+      categoryNav.hidden = false;
+      mainEl.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
   }
 
   const topBtn = document.createElement('button');
