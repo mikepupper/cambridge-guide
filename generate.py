@@ -20,12 +20,18 @@ for i,(cid,title,short,desc) in enumerate(categories):
  cards=[]
  for j,p in enumerate(group):
   url='https://www.google.com/maps/dir/?'+urlencode({'api':'1','destination':p['name']+', '+p['address']+', Cambridge, England','travelmode':'walking'})
-  credit=p.get('attribution','Fotografía del lugar. Consulta la fuente original.')
+  imgs=p['images']
+  slides=''.join(
+   f'<img src="{H(im["src"])}" alt="{H(im.get("alt",p["name"]+" en Cambridge"))}" width="720" height="480" loading="{"eager" if i==0 and j==0 and k==0 else "lazy"}" decoding="async">'
+   for k,im in enumerate(imgs)
+  )
+  dots=('<div class="dots">'+''.join(f'<span class="dot{" active" if k==0 else ""}"></span>' for k in range(len(imgs)))+'</div>') if len(imgs)>1 else ''
+  credits=''.join(f'<p>{H(im["attribution"])} <a href="{H(im["source"])}" target="_blank" rel="noopener noreferrer">Fuente original ↗</a></p>' for im in imgs)
   cards.append(f'''<article class="card" data-lat="{p['lat']}" data-lng="{p['lng']}">
-   <figure class="photo"><img src="{H(p['image'])}" alt="{H(p.get('alt',p['name']+' en Cambridge'))}" width="720" height="480" loading="{'eager' if i==0 and j==0 else 'lazy'}" decoding="async"><span class="tag {'local' if p['local'] else ''}">{'↗ Espíritu local' if p['local'] else '✦ Clásico / imperdible'}</span></figure>
+   <figure class="photo"><div class="carousel">{slides}</div><span class="tag {'local' if p['local'] else ''}">{'↗ Espíritu local' if p['local'] else '✦ Clásico / imperdible'}</span>{dots}</figure>
    <div class="card-body"><p class="card-meta">{short}</p><h3>{H(p['name'])}</h3><p class="description">{H(p['description'])}</p>{('<p class="practical">'+H(p['practical'])+'</p>') if p.get('practical') else ''}<p class="address">{H(p['address'])}</p><p class="distance" hidden></p></div>
    <div class="card-bottom"><a class="map-link" href="{H(url)}" target="_blank" rel="noopener noreferrer" aria-label="Cómo llegar a pie a {H(p['name'])}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m21 3-7 18-3-8-8-3 18-7Z"/><path d="m11 13 10-10"/></svg>Cómo llegar a pie</a><a class="source-link" href="{H(p['source'])}" target="_blank" rel="noopener noreferrer" aria-label="Información de visita: {H(p['name'])}">Visita ↗</a></div>
-   <details class="photo-credit"><summary>Crédito de la fotografía</summary><p>{H(credit)} <a href="{H(p['image_source'])}" target="_blank" rel="noopener noreferrer">Fuente original ↗</a></p></details>
+   <details class="photo-credit"><summary>Crédito de las fotografías</summary>{credits}</details>
   </article>''')
  sections.append(f'<section class="category" id="{cid}" aria-labelledby="title-{cid}"><header class="section-heading"><div><span class="section-number">Capítulo 0{i+1}</span><h2 id="title-{cid}">{title}</h2><p>{desc}</p></div><span class="count">{len(group)} lugares · {sum(p["local"] for p in group)} locales</span></header><div class="cards">'+''.join(cards)+'</div></section>')
 page=f'''<!doctype html>

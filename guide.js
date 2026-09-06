@@ -40,6 +40,27 @@
     window.addEventListener('resize', updateFade);
   }
 
+  function initCarousel(figure) {
+    const track = figure.querySelector('.carousel');
+    const dots = [...figure.querySelectorAll('.dot')];
+    if (!track || dots.length < 2) return;
+    let ticking = false;
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const idx = Math.round(track.scrollLeft / track.clientWidth);
+          dots.forEach((d, k) => d.classList.toggle('active', k === idx));
+          ticking = false;
+        });
+      },
+      { passive: true }
+    );
+  }
+  document.querySelectorAll('.photo').forEach(initCarousel);
+
   const surpriseBtn = document.getElementById('surprise-btn');
   const surpriseView = document.getElementById('surprise-view');
   const surpriseCard = document.getElementById('surprise-card');
@@ -55,6 +76,8 @@
       const pick = cards[Math.floor(Math.random() * cards.length)].cloneNode(true);
       pick.querySelectorAll('img').forEach((img) => (img.loading = 'eager'));
       surpriseCard.replaceChildren(pick);
+      const clonedPhoto = pick.querySelector('.photo');
+      if (clonedPhoto) initCarousel(clonedPhoto);
       introEl.hidden = true;
       categoryNav.hidden = true;
       mainEl.hidden = true;
